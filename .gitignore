@@ -1,0 +1,9 @@
+bin
+lib
+obj
+Properties
+App.config
+CloserDataPipeline.csproj
+CloserDataPipeline.sln
+CloserDataPipeline.suo
+CloserDataPipeline.v12.suo
