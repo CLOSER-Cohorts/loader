@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.Diagnostics;
 
 namespace CloserDataPipeline.Steps
 {
@@ -19,7 +21,7 @@ namespace CloserDataPipeline.Steps
 
         public string Name
         {
-            get { return "Load DDI File"; }
+            get { return "Load DDI File - " + Path.GetFileName(fileName); }
         }
 
         public LoadDdiFile(string fileName)
@@ -33,7 +35,7 @@ namespace CloserDataPipeline.Steps
             if (!System.IO.File.Exists(fileName))
             {
                 //throw new System.Exception("...Missing file: " + fileName);
-                Console.WriteLine("...Missing file: " + fileName);
+                Trace.WriteLine("   missing file: " + fileName);
                return;
             }
             var validator = new DdiValidator(fileName, DdiFileFormat.Ddi32);
@@ -95,7 +97,7 @@ namespace CloserDataPipeline.Steps
                     }
                     else
                     {
-                        Console.WriteLine("Question Construct with no source");
+                        Trace.WriteLine("   question construct with no source");
                     }
                 }
             }                        

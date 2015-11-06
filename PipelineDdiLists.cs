@@ -6,28 +6,17 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace CloserDataPipeline
 {
     public class PipelineDdiLists
     {
-        public string batch { get; protected set; }
-        public List<string> ddiFileList { get; protected set; }
-        public List<ddiMappingFile> ddiMappingFileList { get; protected set; }
-        public List<ddiLinkingFile> ddiLinkingFileList { get; protected set; }
-        public List<ddiQuestionLinkingFile> ddiQuestionLinkingFileList { get; protected set; }
-        public List<ddiDerivationFile> ddiDerivationFileList { get; protected set; }
-        public List<string> ddiToplevelFileList { get; protected set; }
+        public List<batch> batchList { get; protected set; }
 
         public PipelineDdiLists(string importPath)
         {
-            ddiFileList = new List<string>();
-            ddiMappingFileList = new List<ddiMappingFile>();
-            ddiLinkingFileList = new List<ddiLinkingFile>();
-            ddiQuestionLinkingFileList = new List<ddiQuestionLinkingFile>();
-            ddiDerivationFileList = new List<ddiDerivationFile>();
-            ddiToplevelFileList = new List<string>();
-            batch = "";
+            batchList = new List<batch>();
 
             string[] lines = File.ReadAllLines(importPath);
             foreach (string line in lines)
@@ -54,201 +43,94 @@ namespace CloserDataPipeline
             string[] parts = line.Split(new char[] { '\t' });
             if ((parts.Length == 2) && (parts[0] == "batch"))
             {
-                batch = parts[1];
-            }
-            else if (parts[0] == batch)
-            { 
-                if ((parts.Length == 3) && (parts[1] == "CONCEPTS"))
-                {
-                    ddiFileList.Add(parts[2].Trim());
-                }
-                else if ((parts.Length == 3) && (parts[1] == "CADDIES"))
-                {
-                    ddiFileList.Add(parts[2].Trim());
-                }
-                else if ((parts.Length == 3) && (parts[1] == "TOPLEVEL"))
-                {
-                    ddiToplevelFileList.Add(parts[2].Trim());
-                }
-                else if ((parts.Length == 3) && (parts[1] == "VARIABLES"))
-                {
-                    ddiFileList.Add(parts[2].Trim());
-                }
-                else if ((parts.Length == 5) && (parts[1] == "MAPPING"))
-                {
-                    string mappingFile = parts[2].Trim();
-                    string ccScheme = parts[3].Trim();
-                    string vScheme = parts[4].Trim();
-                    ddiMappingFile mf = new ddiMappingFile(mappingFile, ccScheme, vScheme);
-                    ddiMappingFileList.Add(mf);
-                }
-                else if ((parts.Length == 4) && (parts[1] == "LINKING"))
-                {
-                    string linkingFile = parts[2].Trim();
-                    string vScheme = parts[3].Trim();
-                    ddiLinkingFile lf = new ddiLinkingFile(linkingFile, vScheme);
-                    ddiLinkingFileList.Add(lf);
-                }
-                else if ((parts.Length == 4) && (parts[1] == "QLINK"))
-                {
-                    string questionLinkingFile = parts[2].Trim();
-                    string qcScheme = parts[3].Trim();
-                    ddiQuestionLinkingFile lf = new ddiQuestionLinkingFile(questionLinkingFile, qcScheme);
-                    ddiQuestionLinkingFileList.Add(lf);
-                }
-                else if ((parts.Length == 4) && (parts[1] == "DERIVATION"))
-                {
-                    string derivationFile = parts[2].Trim();
-                    string vScheme = parts[3].Trim();
-                    ddiDerivationFile df = new ddiDerivationFile(derivationFile, vScheme);
-                    ddiDerivationFileList.Add(df);
-                }
-                else
-                {
-                    Console.WriteLine("Invalid batch line: " + line);
-                }
-
+                string parsedBatchName = parts[1];
+                batch newBatch = new batch(parsedBatchName);
+                batchList.Add(newBatch);
             }
             else
             {
-                //Console.WriteLine("Irrelevant line: " + line);
+                //if the line starts with the name of a batch
+                var relevantBatch = batchList.Find(x => string.Compare(x.batchName, parts[0], ignoreCase: true) == 0);
+                if (relevantBatch != null)
+                {
+                    if ((parts.Length == 3) && (parts[1] == "CONCEPTS"))
+                    {
+                        relevantBatch.ddiFileList.Add(parts[2].Trim());
+                    }
+                    else if ((parts.Length == 3) && (parts[1] == "CADDIES"))
+                    {
+                        relevantBatch.ddiFileList.Add(parts[2].Trim());
+                    }
+                    else if ((parts.Length == 3) && (parts[1] == "TOPLEVEL"))
+                    {
+                        relevantBatch.ddiToplevelFileList.Add(parts[2].Trim());
+                    }
+                    else if ((parts.Length == 3) && (parts[1] == "VARIABLES"))
+                    {
+                        relevantBatch.ddiFileList.Add(parts[2].Trim());
+                    }
+                    else if ((parts.Length == 5) && (parts[1] == "MAPPING"))
+                    {
+                        string mappingFile = parts[2].Trim();
+                        string ccScheme = parts[3].Trim();
+                        string vScheme = parts[4].Trim();
+                        ddiMappingFile mf = new ddiMappingFile(mappingFile, ccScheme, vScheme);
+                        relevantBatch.ddiMappingFileList.Add(mf);
+                    }
+                    else if ((parts.Length == 4) && (parts[1] == "LINKING"))
+                    {
+                        string linkingFile = parts[2].Trim();
+                        string vScheme = parts[3].Trim();
+                        ddiLinkingFile lf = new ddiLinkingFile(linkingFile, vScheme);
+                        relevantBatch.ddiLinkingFileList.Add(lf);
+                    }
+                    else if ((parts.Length == 4) && (parts[1] == "QLINK"))
+                    {
+                        string questionLinkingFile = parts[2].Trim();
+                        string qcScheme = parts[3].Trim();
+                        ddiQuestionLinkingFile lf = new ddiQuestionLinkingFile(questionLinkingFile, qcScheme);
+                        relevantBatch.ddiQuestionLinkingFileList.Add(lf);
+                    }
+                    else if ((parts.Length == 4) && (parts[1] == "DERIVATION"))
+                    {
+                        string derivationFile = parts[2].Trim();
+                        string vScheme = parts[3].Trim();
+                        ddiDerivationFile df = new ddiDerivationFile(derivationFile, vScheme);
+                        relevantBatch.ddiDerivationFileList.Add(df);
+                    }
+                    else
+                    {
+                        Trace.WriteLine("ERROR: Invalid batch line: " + line);
+                    }
+                }
+                else
+                {
+                    //Trace.WriteLine("Irrelevant line: " + line);
+                }
             }
         }
+    }
 
-        //public void AddMappingList(string importMappingPath)
-        //{
-        //    //ddiMappingFileList = new List<string>();
-        //    ddiMappingFileList = new List<ddiMappingFile>();
-        //    string[] lines = File.ReadAllLines(importMappingPath);
-        //    foreach (string line in lines)
-        //    {
-        //        string line2 = line.Trim();
-        //        if (String.Equals(line2, ""))
-        //        {
-        //            continue;
-        //        }
-        //        else if (line2[0] == '#')
-        //            continue;
-        //        else
-        //        {
-        //            string[] parts = line2.Split(new char[] { '\t' });
-        //            if (parts.Length != 3)
-        //            {
-        //                Console.WriteLine("Invalid line: " + line2);
-        //                continue;
-        //            }
+    public class batch
+    {
+        public String batchName { get; protected set; }
+        public List<string> ddiFileList { get; protected set; }
+        public List<ddiMappingFile> ddiMappingFileList { get; protected set; }
+        public List<ddiLinkingFile> ddiLinkingFileList { get; protected set; }
+        public List<ddiQuestionLinkingFile> ddiQuestionLinkingFileList { get; protected set; }
+        public List<ddiDerivationFile> ddiDerivationFileList { get; protected set; }
+        public List<string> ddiToplevelFileList { get; protected set; }
 
-        //            string mappingFile = parts[0].Trim();
-        //            string ccScheme = parts[1].Trim();
-        //            string vScheme = parts[2].Trim();
-        //            ddiMappingFile mf = new ddiMappingFile(mappingFile, ccScheme, vScheme);
-        //            //ddiMappingFileList.Add(mappingFile);
-        //            ddiMappingFileList.Add(mf);
-        //        }
-
-        //    }
-        //}
-   
-        //public void AddLinkingList(string importLinkingPath)
-        //{
-        //    ddiLinkingFileList = new List<ddiLinkingFile>();
-        //    string[] lines = File.ReadAllLines(importLinkingPath);
-        //    foreach (string line in lines)
-        //    {
-        //        string line2 = line.Trim();
-        //        if (String.Equals(line2, ""))
-        //        {
-        //            continue;
-        //        }
-        //        else if (line2[0] == '#')
-        //        {
-        //            continue;
-        //        }
-        //        else
-        //        {
-        //            string[] parts = line2.Split(new char[] { '\t' });
-        //            if (parts.Length != 2)
-        //            {
-        //                Console.WriteLine("Invalid line: " + line2);
-        //                continue;
-        //            }
-
-        //            string linkingFile = parts[0].Trim();
-        //            string vScheme = parts[1].Trim();
-        //            ddiLinkingFile lf = new ddiLinkingFile(linkingFile, vScheme);
-        //            ddiLinkingFileList.Add(lf);
-        //        }
-
-        //    }
-        //}
-
-        //public void AddQuestionLinkingList(string importQuestionLinkingPath)
-        //{
-        //    ddiQuestionLinkingFileList = new List<ddiQuestionLinkingFile>();
-        //    string[] lines = File.ReadAllLines(importQuestionLinkingPath);
-        //    foreach (string line in lines)
-        //    {
-        //        string line2 = line.Trim();
-        //        if (String.Equals(line2, ""))
-        //        {
-        //            continue;
-        //        }
-        //        else if (line2[0] == '#')
-        //        {
-        //            continue;
-        //        }
-        //        else
-        //        {
-        //            string[] parts = line2.Split(new char[] { '\t' });
-        //            if (parts.Length != 2)
-        //            {
-        //                Console.WriteLine("Invalid line: " + line2);
-        //                continue;
-        //            }
-
-        //            string questionLinkingFile = parts[0].Trim();
-        //            string qcScheme = parts[1].Trim();
-        //            ddiQuestionLinkingFile lf = new ddiQuestionLinkingFile(questionLinkingFile, qcScheme);
-        //            ddiQuestionLinkingFileList.Add(lf);
-        //        }
-
-        //    }
-        //}
- 
-        //public void AddDerivationList(string importDerivationPath)
-        //{
-        //    ddiDerivationFileList = new List<ddiDerivationFile>();
-        //    string[] lines = File.ReadAllLines(importDerivationPath);
-        //    foreach (string line in lines)
-        //    {
-        //        string line2 = line.Trim();
-        //        if (String.Equals(line2, ""))
-        //        {
-        //            continue;
-        //        }
-        //        else if (line2[0] == '#')
-        //        {
-        //            continue;
-        //        }
-        //        else
-        //        {
-        //            string[] parts = line2.Split(new char[] { '\t' });
-        //            if (parts.Length != 2)
-        //            {
-        //                Console.WriteLine("Invalid line: " + line2);
-        //                continue;
-        //            }
-
-        //            string derivationFile = parts[0].Trim();
-        //            string vScheme = parts[1].Trim();
-        //            ddiDerivationFile df = new ddiDerivationFile(derivationFile, vScheme);
-        //            ddiDerivationFileList.Add(df);
-        //        }
-
-        //    }
-
-        //}
-
+        public batch(string bn)
+        {
+            batchName = bn;
+            ddiFileList = new List<string>();
+            ddiMappingFileList = new List<ddiMappingFile>();
+            ddiLinkingFileList = new List<ddiLinkingFile>();
+            ddiQuestionLinkingFileList = new List<ddiQuestionLinkingFile>();
+            ddiDerivationFileList = new List<ddiDerivationFile>();
+            ddiToplevelFileList = new List<string>();
+        }
     }
 
     public class ddiMappingFile

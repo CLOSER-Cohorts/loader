@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace CloserDataPipeline.Steps
 {
@@ -21,7 +22,7 @@ namespace CloserDataPipeline.Steps
 
         public string Name
         {
-            get { return "Link Concepts to Variables"; }
+            get { return "Link Concepts to Variables - " + Path.GetFileName(fileName); }
         }
 
         public LinkConceptsToVariables(string fileName, string vsName)
@@ -38,7 +39,7 @@ namespace CloserDataPipeline.Steps
             if (!System.IO.File.Exists(fileName))
             {
                 //throw new System.Exception("...Missing file: " + fileName);
-                Console.WriteLine("...Missing file: " + fileName);
+                Trace.WriteLine("   missing file: " + fileName);
                 return;
             }
 
@@ -62,7 +63,7 @@ namespace CloserDataPipeline.Steps
                 string[] parts = line.Split(new char[] { '\t' });
                 if (parts.Length != 2)
                 {
-                    Console.WriteLine("   invalid line: " + line);
+                    Trace.WriteLine("      invalid line: " + line);
                     continue;
                 }
 
@@ -74,7 +75,6 @@ namespace CloserDataPipeline.Steps
 
         }
 
- 
         private void CreateVariableGroups()
          {
              //Get concepts that are used, add the implicit ones and except for "0" create variable groups from them in the relevant variable scheme and put into the working set
@@ -128,14 +128,13 @@ namespace CloserDataPipeline.Steps
 
                      vg.Concept = vgConcept;
                      vg.ItemName.Add("en-GB", "Variable Group - " + vgConcept.Label.Best);
-                     //Console.WriteLine("   " + vg.ItemName.Best);
+                     //Trace.WriteLine("   " + vg.ItemName.Best);
                      variableScheme.VariableGroups.Add(vg);
                  }
              }
              WorkingSet.AddRange(variableScheme.VariableGroups);
-             Console.WriteLine("  concept groups: " + variableScheme.VariableGroups.Count().ToString() + " for " + this.vsName);
+             Trace.WriteLine("  concept groups: " + variableScheme.VariableGroups.Count().ToString() + " for " + this.vsName);
          }
-
 
         private void BuildVariableGroupHierarchy()
          {
@@ -161,7 +160,7 @@ namespace CloserDataPipeline.Steps
                 {
                     if (string.Compare(variablesConcepts[vta.ItemName.Best], "0") == 0)
                     {
-                        Console.WriteLine("  variable with 0 topic: " + vta.ItemName.Best);
+                        Trace.WriteLine("     variable with 0 topic: " + vta.ItemName.Best);
                     }
                     else
                     {
@@ -172,149 +171,9 @@ namespace CloserDataPipeline.Steps
                 }
                 else
                 {
-                    Console.WriteLine("  variable not in linking file: " + vta.ItemName.Best);
+                    Trace.WriteLine("     variable not in linking file: " + vta.ItemName.Best);
                 }
             }
         }
-
-
-
-
-
-
-
-
-        //ignore Execute2 which was based on propagation down the control construct tree, we have files with variables and concepts now
-        //in progress
-        public void Execute2()
-        {
-            // The file format is:
-            //   [sequenceId] [Tab] [conceptName] [Tab] [conceptIdx or 0]
-            //
-            Dictionary<string, string> sequencesConcepts = new Dictionary<string, string>();
-
-            // Read each line and put into dictionary.
-            string[] lines = File.ReadAllLines(this.fileName);
-            foreach (string line in lines)
-            {
-                // Break the line apart by the tab character.
-                // The left side is the sequenceid. 
-                // The middle is the concept name to ignore.
-                // The right side is the concept index.
-                string[] parts = line.Split(new char[] { '\t' });
-                if (parts.Length != 3)
-                {
-                    Console.WriteLine("  invalid line: " + line);
-                    continue;
-                }
-
-                string sequenceId = parts[0].Trim();
-                string conceptIdx = parts[2].Trim();
-
-                sequencesConcepts.Add(sequenceId, conceptIdx);
-            }
-
-            //Get concepts that are used and create variable groups from them in the relevant variable scheme
-            List<string> usedConcepts = new List<string>();
-            usedConcepts = sequencesConcepts.Values.Distinct().ToList();
-            var variableScheme = WorkingSet.OfType<VariableScheme>().Where(x => string.Compare(x.ItemName.Best, this.vsName, ignoreCase:true) == 0).First();
-
-            foreach (var uc in usedConcepts)
-            {
-                if (uc != "0")
-                {
-                    string conceptId = "concept1" + uc.PadLeft(2, '0');
-                    Console.WriteLine("conceptId: " + conceptId);
-                    VariableGroup vg = new VariableGroup();
-                    vg.TypeOfGroup = "ConceptGroup";
-                    var vgConcept = WorkingSet.OfType<Concept>().Where(x => string.Compare(x.UserIds.First().Identifier, conceptId, ignoreCase: true) == 0).First();
-                    vg.Concept = vgConcept;
-                    vg.ItemName.Add("en-GB", "Variable Group - " + vgConcept.ItemName.Best);
-                    Console.WriteLine(vg.ItemName.Best);
-
-                    variableScheme.VariableGroups.Add(vg);
-                }
-            }
-            WorkingSet.AddRange(variableScheme.VariableGroups);
-            Console.WriteLine("concept groups: " + variableScheme.VariableGroups.Count().ToString() + " for " + this.vsName);
-
-            //find the sequences and tag with the concept by using a custom field
-            var wsSequences = WorkingSet.OfType<CustomSequenceActivity>();
-            //Console.WriteLine("sequences count: " + wsSequences.Count());
-            foreach (var wsSequence in wsSequences)
-            {
-                if (sequencesConcepts.Keys.Contains(wsSequence.UserIds.First().Identifier))
-                {
-                    System.Console.WriteLine("sequences " + wsSequence.UserIds.First().Identifier + " " + wsSequence.Identifier + " " + sequencesConcepts[wsSequence.UserIds.First().Identifier]);
-                    UserAttribute ua = new UserAttribute();
-                    ua.Key = "GroupingConcept";
-                    if (sequencesConcepts[wsSequence.UserIds.First().Identifier] != "0")
-                    {
-                        ua.Value = "concept1" + sequencesConcepts[wsSequence.UserIds.First().Identifier].PadLeft(2, '0');
-                    }
-                    else
-                    {
-                        ua.Value = "0";
-                    }
-                    wsSequence.UserAttributes.Add(ua);
-                }
-            }
-
-            //for each sequence, traverse its descendant tree and propagate the concept tagging to direct question/variable descendants
-            // for now, I assume that all sequences are listed in the linking file and I don't check the ccScheme
-            foreach (var wsSequence in wsSequences)
-            {
-                if (sequencesConcepts.Keys.Contains(wsSequence.UserIds.First().Identifier))
-                {
-                    if (wsSequence.UserAttributes.Count() != 0)
-                    {
-                        Console.WriteLine("sequence: " + wsSequence.UserIds.First().Identifier + " " + wsSequence.UserAttributes.First().Value.Value);
-                        if (string.Compare(wsSequence.UserAttributes.First().Value.Value, "0") != 0)
-                        {
-                            propagateTagging(wsSequence, "0");
-                        }
-                    }
-                }
-            }
-        }
-
-        public void propagateTagging(CustomSequenceActivity s, string parentTag)
-        {
-
-            foreach (var activity in s.Activities)
-            {
-                //Console.WriteLine(activity.GetType().Name);
-                if (activity.GetType().Name == "StatementActivity")
-                {
-                    continue;
-                }
-                else if (activity.GetType().Name == "QuestionActivity")
-                {
-                    //get the variable group with the right concept
-                    var variableGroup = WorkingSet.OfType<VariableScheme>().Where(x => string.Compare(x.ItemName.Best, this.vsName, ignoreCase: true) == 0).First().
-                        VariableGroups.Where(x => string.Compare(x.Concept.UserIds.First().Identifier, s.UserAttributes.First().Value.Value) == 0).First();
-                   //Console.WriteLine("variable group: " + variableGroup.Concept.UserIds.First().Identifier );
-                   //get the variable from the question activity if it is a question item
-                    QuestionActivity qc = (QuestionActivity)activity;
-                    if (qc.Question != null)
-                    {
-                        Console.WriteLine("question item: " + qc.Question.ItemName.Best);
-                        var variableToAdd = WorkingSet.OfType<VariableScheme>().Where(x => string.Compare(x.ItemName.Best, this.vsName, ignoreCase: true) == 0).First().
-                            Variables.Where(x => x.SourceQuestions.Count() != 0).Where(x => string.Compare(x.SourceQuestions.First().ItemName.Best, qc.Question.ItemName.Best, ignoreCase: true) == 0).FirstOrDefault();
-                        if (variableToAdd != null)
-                        {
-                            Console.WriteLine(" " + variableToAdd.ItemName.Best);
-                            variableGroup.AddChild(variableToAdd);
-                        }
-                    }                    
-                }
-                else if (activity.GetType().Name == "CustomSequenceActivity")
-                {
-                    continue;
-                    //Console.WriteLine("propagate");
-                    //propagateTagging(activity);
-                }
-            }
-        }
-    }
+     }
 }

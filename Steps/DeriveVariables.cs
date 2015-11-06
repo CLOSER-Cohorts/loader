@@ -18,7 +18,7 @@ namespace CloserDataPipeline.Steps
 
         public string Name
         {
-            get { return "Derive Variables"; }
+            get { return "Derive Variables - " + Path.GetFileName(fileName); }
         }
 
         public DeriveVariables(string fileName, string vsName)
@@ -33,7 +33,7 @@ namespace CloserDataPipeline.Steps
             //   [SourceVariableName] [Tab] [DerivedVariableName], many-to-many
             if (!System.IO.File.Exists(fileName))
             {
-                Console.WriteLine("...Missing file: " + fileName);
+                Console.WriteLine("   missing file: " + fileName);
                 return;
             }
 
@@ -47,7 +47,7 @@ namespace CloserDataPipeline.Steps
                 string[] parts = line.Split(new char[] { '\t' });
                 if (parts.Length != 2)
                 {
-                    Console.WriteLine("Invalid line: " + line);
+                    Console.WriteLine("      invalid line: " + line);
                     continue;
                 }
 
@@ -57,7 +57,7 @@ namespace CloserDataPipeline.Steps
 
                 if (sourceVariable == "0")
                 {
-                    Console.WriteLine("  [item] source variable is 0");
+                    Console.WriteLine("      [item] source variable is 0");
                     continue;
                 }
 
@@ -65,12 +65,12 @@ namespace CloserDataPipeline.Steps
 
                 if (matchingSources.Count() == 0)
                 {
-                    Console.WriteLine("  [item] No variable named " + sourceVariable);
+                    Console.WriteLine("      [item] no variable named " + sourceVariable);
                     continue;
                 }
                 else if (matchingSources.Count() > 1)
                 {
-                    Console.WriteLine("  [item] Multiple variables named " + sourceVariable);
+                    Console.WriteLine("      [item] multiple variables named " + sourceVariable);
                     continue;
                 }
 
@@ -80,12 +80,12 @@ namespace CloserDataPipeline.Steps
 
                 if (matchingDVs.Count() == 0)
                 {
-                    Console.WriteLine("  [item] No variable named " + derivedVariable);
+                    Console.WriteLine("      [item] no variable named " + derivedVariable);
                     continue;
                 }
                 else if (matchingDVs.Count() > 1)
                 {
-                    Console.WriteLine("  [item] Multiple variables named " + derivedVariable);
+                    Console.WriteLine("      [item] multiple variables named " + derivedVariable);
                     continue;
                 }
 

@@ -19,79 +19,83 @@ namespace CloserDataPipeline
             Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Console.Out));
             Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(@"d:\development\claude\repo_ingest\imports\loader.log", "myListener"));
             Trace.WriteLine("LOADER START: " + DateTime.Now.ToString("s"));
+            Trace.WriteLine("Ignore the log4net messages");    //has disappeared after adding System.Diagnostics to PipelineDdiLists.cs
 
             MultilingualString.CurrentCulture = "en-GB";
             VersionableBase.DefaultAgencyId = "uk.cls";
 
-            var runner = new PipelineRunner();
-
-            //files of lists of files to be ingested
+            //file of lists of files to be ingested
             string listPath = @"d:\development\claude\repo_ingest\imports\ddifiles.txt";
 
             //the directory where these files are 
             string basePath = @"";      //for when the files are in multiple places
 
-            //Console.WriteLine("Start loader...");
-
+            //read the batches and lists of files
             var ddiLists = new PipelineDdiLists(listPath);
-            //ddiLists.AddMappingList(mappingListPath);
-            //ddiLists.AddLinkingList(linkingListPath);
-            //ddiLists.AddQuestionLinkingList(questionLinkingListPath);
-            //ddiLists.AddDerivationList(derivationListPath);
 
-            //put all the ddi32 files into pipeline steps
-            foreach (string fileName in ddiLists.ddiFileList)
+            //loop over the batches
+            foreach(var batch in ddiLists.batchList)
             {
-                System.Console.WriteLine("ddi file to load: " + fileName);
-                runner.Steps.Add(new LoadDdiFile(Path.Combine(basePath, fileName)));
+                Trace.WriteLine("***START Batch: " + batch.batchName + "***");
+                Trace.WriteLine("Creating steps...");
+                //a new runner for each batch
+                var runner = new PipelineRunner();
+
+                //put all the ddi32 files (concepts, caddies and variables) into pipeline steps
+                foreach (string fileName in batch.ddiFileList)
+                {
+                    Trace.WriteLine("  " + fileName);
+                    runner.Steps.Add(new LoadDdiFile(Path.Combine(basePath, fileName)));
+                }
+                Trace.WriteLine(" total ddi files to load: " + batch.ddiFileList.Count());
+
+                //put all the toplevel files into pipeline steps
+                foreach (string fileName in batch.ddiToplevelFileList)
+                {
+                    Trace.WriteLine("  " + fileName);
+                    runner.Steps.Add(new LoadDdiToplevelFile(Path.Combine(basePath, fileName)));
+                }
+                Trace.WriteLine(" total toplevel file to load and mesh: " + batch.ddiToplevelFileList.Count());
+
+                //put adding the source question item to the variables into pipeline steps
+                foreach (ddiMappingFile mf in batch.ddiMappingFileList)
+                {
+                    Trace.WriteLine("  " + mf.mappingFileName);
+                    runner.Steps.Add(new MapVariablesToQuestions(Path.Combine(basePath, mf.mappingFileName), mf.ccsName, mf.vsName));
+                }
+                Trace.WriteLine(" total mapping file to load: " + batch.ddiMappingFileList.Count());
+
+                //put adding VariableGroups for each linking file into pipeline steps 
+                foreach (ddiLinkingFile lf in batch.ddiLinkingFileList)
+                {
+                    Trace.WriteLine("  " + lf.linkingFileName);
+                    runner.Steps.Add(new LinkConceptsToVariables(Path.Combine(basePath, lf.linkingFileName), lf.vsName));
+                }
+                Trace.WriteLine(" total linking file to load: " + batch.ddiLinkingFileList.Count());
+
+                //put adding QuestionGroups for each question linking file into pipeline steps
+                foreach (ddiQuestionLinkingFile qclf in batch.ddiQuestionLinkingFileList)
+                {
+                    Trace.WriteLine("  " + qclf.questionLinkingFileName);
+                    runner.Steps.Add(new LinkConceptsToQuestions(Path.Combine(basePath, qclf.questionLinkingFileName), qclf.qcsName));
+                }
+                Trace.WriteLine(" total question linking file to load: " + batch.ddiQuestionLinkingFileList.Count());
+
+                //put adding Derivations for each variable derivation file into pipeline steps
+                foreach (ddiDerivationFile df in batch.ddiDerivationFileList)
+                {
+                    Trace.WriteLine("  " + df.derivationFileName);
+                    runner.Steps.Add(new DeriveVariables(Path.Combine(basePath, df.derivationFileName), df.vsName));
+                }
+                Trace.WriteLine(" total variable derivation file to load: " + batch.ddiDerivationFileList.Count());
+
+
+                //digest the batch and commit to the repository
+                runner.Run();
             }
-            System.Console.WriteLine("total: " + ddiLists.ddiFileList.Count());
-
-            foreach (string fileName in ddiLists.ddiToplevelFileList)
-            {
-                System.Console.WriteLine("ddi toplevel file to load and mesh: " + fileName);
-                runner.Steps.Add(new LoadDdiToplevelFile(Path.Combine(basePath, fileName)));
-            }
-            System.Console.WriteLine("total: " + ddiLists.ddiToplevelFileList.Count());
-
-            //add the source question item to the variables into pipeline steps
-            foreach (ddiMappingFile mf in ddiLists.ddiMappingFileList)
-            {
-                System.Console.WriteLine("mapping file to load: " + mf.mappingFileName);
-                runner.Steps.Add(new MapVariablesToQuestions(Path.Combine(basePath, mf.mappingFileName), mf.ccsName, mf.vsName));
-            }
-            System.Console.WriteLine("total: " + ddiLists.ddiMappingFileList.Count());
-
-            //for each linking file, add VariableGroups
-            foreach (ddiLinkingFile lf in ddiLists.ddiLinkingFileList)
-            {
-                System.Console.WriteLine("linking file to load: " + lf.linkingFileName);
-                runner.Steps.Add(new LinkConceptsToVariables(Path.Combine(basePath, lf.linkingFileName), lf.vsName));
-            }
-            System.Console.WriteLine("total: " + ddiLists.ddiLinkingFileList.Count());
-
-            //for each question linking file, add QuestionGroups
-            foreach (ddiQuestionLinkingFile qclf in ddiLists.ddiQuestionLinkingFileList)
-            {
-                System.Console.WriteLine("question linking file to load: " + qclf.questionLinkingFileName);
-                runner.Steps.Add(new LinkConceptsToQuestions(Path.Combine(basePath, qclf.questionLinkingFileName), qclf.qcsName));
-            }
-            System.Console.WriteLine("total: " + ddiLists.ddiQuestionLinkingFileList.Count());
-
-            //for each variable derivation file, add Derivations
-            foreach (ddiDerivationFile df in ddiLists.ddiDerivationFileList)
-            {
-                System.Console.WriteLine("variable derivation file to load: " + df.derivationFileName);
-                runner.Steps.Add(new DeriveVariables(Path.Combine(basePath, df.derivationFileName), df.vsName));
-            }
-            System.Console.WriteLine("total: " + ddiLists.ddiDerivationFileList.Count());
-
-
-            //commit to the repository
-            runner.Run();
 
             Trace.WriteLine("LOADER END: " + DateTime.Now.ToString("s"));
-            //Trace.WriteLine("");
+            Trace.WriteLine("");
             Trace.Flush();
 
             // Remove the ReadLine() call to allow the console application to exit 

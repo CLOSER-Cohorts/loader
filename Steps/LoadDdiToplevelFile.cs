@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.Diagnostics;
 
 namespace CloserDataPipeline.Steps
 {
@@ -19,7 +21,7 @@ namespace CloserDataPipeline.Steps
 
         public string Name
         {
-            get { return "Load DDI Toplevel File and mesh"; }
+            get { return "Load DDI Toplevel File and mesh - " + Path.GetFileName(fileName); }
         }
 
         public LoadDdiToplevelFile(string fileName)
@@ -29,11 +31,10 @@ namespace CloserDataPipeline.Steps
 
         public void Execute()
         {
-            // Load the DDI 3.2 file.
+            // Load the DDI 3.2 toplevel file.
             if (!System.IO.File.Exists(fileName))
             {
-                //throw new System.Exception("...Missing file: " + fileName);
-                Console.WriteLine("...Missing file: " + fileName);
+                Trace.WriteLine("   missing file: " + fileName);
                return;
             }
             var validator = new DdiValidator(fileName, DdiFileFormat.Ddi32);
@@ -52,20 +53,21 @@ namespace CloserDataPipeline.Steps
             var allItems = gatherer.FoundItems;
 
             //mesh in the instrument references
-            var dataCollections = allItems.OfType<DataCollection>();
+            //nb: ItemName seems to be the empty string rather than null if it does not exist in the ddi file
+            var dataCollections = allItems.OfType<DataCollection>().Where(x => string.Compare(x.ItemName.Best, "") != 0);
             foreach (var dc in dataCollections)
             {
-                //Console.WriteLine("data collection " + dc.ItemName.Best);
                 var instrumentName = dc.ItemName.Best + "-in-000001";
                 var instruments = WorkingSet.OfType<Instrument>().Where(x => string.Compare(x.UserIds[0].Identifier, instrumentName, ignoreCase: true) == 0);
                 var ic = instruments.Count();
                 if (ic == 1)
                     dc.AddChild(instruments.First());
                 else if (ic > 1)
-                   Console.WriteLine("More than one instrument found for " + instrumentName);
+                   Trace.WriteLine("   more than one instrument found for " + instrumentName);
                 else
                 {
-                    Console.WriteLine("No instrument found for " + instrumentName + ", to do: trying repo");
+                    Trace.WriteLine("   no instrument found for " + instrumentName);
+                    //to do: try repo
                     //var client = Utility.GetClient();
                     //var facet = new SearchFacet();
                     //facet.ItemTypes.Add(DdiItemType.Instrument);
@@ -85,7 +87,7 @@ namespace CloserDataPipeline.Steps
             var studyUnits = allItems.OfType<StudyUnit>();
             foreach (var su in studyUnits)
             {
-                foreach (var dc in su.DataCollections)
+                foreach (var dc in su.DataCollections.Where(x => string.Compare(x.ItemName.Best, "") != 0))
                 {
                     var dcName =  dc.ItemName.Best;
                     
@@ -94,36 +96,36 @@ namespace CloserDataPipeline.Steps
                     if (lpc == 1)
                         su.AddChild(matchingLogicalProducts.First());
                     else if (lpc > 1)
-                        Console.WriteLine("More than one logical product found for " + dcName);
+                        Trace.WriteLine("   more than one logical product found for " + dcName);
                     else
-                        Console.WriteLine("No logical product found for " + dcName);
+                        Trace.WriteLine("   no logical product found for " + dcName);
 
                     var matchingPhysicalProducts = WorkingSet.OfType<PhysicalProduct>().Where(x => string.Compare(x.ItemName.Best, dcName, ignoreCase: true) == 0);
                     var pdpc = matchingPhysicalProducts.Count();
                     if (pdpc == 1)
                         su.AddChild(matchingPhysicalProducts.First());
                     else if (pdpc > 1)
-                        Console.WriteLine("More than one physical data product found for " + dcName);
+                        Trace.WriteLine("   more than one physical data product found for " + dcName);
                     else
-                        Console.WriteLine("No physical data product found for " + dcName);
+                        Trace.WriteLine("   no physical data product found for " + dcName);
 
                     var matchingPhysicalInstances = WorkingSet.OfType<PhysicalInstance>().Where(x => string.Compare(x.DublinCoreMetadata.AlternateTitle.Best, dcName, ignoreCase: true) == 0);
                     var pic = matchingPhysicalInstances.Count();
                     if (pic == 1)
                         su.AddChild(matchingPhysicalInstances.First());
                     else if (pic > 1)
-                        Console.WriteLine("More than one physical instance found for " + dcName);
+                        Trace.WriteLine("   more than one physical instance found for " + dcName);
                     else
-                        Console.WriteLine("No physical instance found for " + dcName);
+                        Trace.WriteLine("   no physical instance found for " + dcName);
 
                     var matchingResourcePackages = WorkingSet.OfType<ResourcePackage>().Where(x => string.Compare(x.DublinCoreMetadata.AlternateTitle.Best, dcName, ignoreCase: true) == 0);
                     var rpc = matchingResourcePackages.Count();
                     if (rpc == 1)
                         su.AddChild(matchingResourcePackages.First());
                     else if (rpc > 1)
-                        Console.WriteLine("More than one resource package found for " + dcName);
+                        Trace.WriteLine("   more than one resource package found for " + dcName);
                     else
-                        Console.WriteLine("No resource package found for " + dcName);
+                        Trace.WriteLine("   no resource package found for " + dcName);
                 }
             }
 

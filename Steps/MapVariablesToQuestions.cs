@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace CloserDataPipeline.Steps
 {
@@ -19,8 +20,7 @@ namespace CloserDataPipeline.Steps
 
         public string Name
         {
-            //get { return "Map Variables to Questions from " + this.fileName; }
-            get { return "Map Variables to Questions"; }
+            get { return "Map Variables to Questions - " + Path.GetFileName(fileName); }
         }
 
         public MapVariablesToQuestions(string fileName, string ccsName, string vsName)
@@ -41,8 +41,7 @@ namespace CloserDataPipeline.Steps
 
             if (!System.IO.File.Exists(fileName))
             {
-                //throw new System.Exception("...Missing file: " + fileName);
-                Console.WriteLine("...Missing file: " + fileName);
+                Trace.WriteLine("   missing file: " + fileName);
                 return;
             }
             
@@ -56,7 +55,7 @@ namespace CloserDataPipeline.Steps
                 string[] parts = line.Split(new char[] { '\t' });
                 if (parts.Length != 2)
                 {
-                    Console.WriteLine("Invalid line: " + line);
+                    Trace.WriteLine("      invalid line: " + line);
                     continue;
                 }
 
@@ -76,7 +75,7 @@ namespace CloserDataPipeline.Steps
                     continue;
                 }
 
-                //Console.WriteLine("Working with [" + ccsName + ", " + vsName + "] " + questionName + " and " + variableName);
+                //Trace.WriteLine("   Working with [" + ccsName + ", " + vsName + "] " + questionName + " and " + variableName);
 
                 // The mapping file points to the name of the QuestionConstruct, not the QuestionItem.
                 // Look this up in the right control construct scheme and then look up the question or question grid from that.
@@ -91,20 +90,21 @@ namespace CloserDataPipeline.Steps
 
                 if (matchingQuestionConstructs.Count() == 0)
                 {
-                    Console.WriteLine("No question named " + questionName);
+                    Trace.WriteLine("      no question named " + questionName);
                     continue;
                 }
                 else if (matchingQuestionConstructs.Count() > 1)
                 {
-                    Console.WriteLine("Multiple questions named " + questionName);
+                    Trace.WriteLine("      multiple questions named " + questionName);
                     continue;
                 }
 
                 var questionConstruct = matchingQuestionConstructs.First();
 
+                //follow through to question item or grid
                 if ((questionConstruct.Question == null) && (questionConstruct.QuestionGrid == null))
                 {
-                    Console.WriteLine("Question Construct does not have question or question grid: " + questionName);
+                    Trace.WriteLine("      question construct does not have question or question grid: " + questionName);
                     continue;
                 }
 
@@ -121,12 +121,12 @@ namespace CloserDataPipeline.Steps
 
                     if (matchingVariables.Count() == 0)
                     {
-                        Console.WriteLine("  [item] No variable named " + variableName);
+                        Trace.WriteLine("        [item] no variable named " + variableName);
                         continue;
                     }
                     else if (matchingVariables.Count() > 1)
                     {
-                        Console.WriteLine("  [item] Multiple variables named " + variableName);
+                        Trace.WriteLine("        [item] multiple variables named " + variableName);
                         continue;
                     }
 
@@ -150,7 +150,7 @@ namespace CloserDataPipeline.Steps
                         Where(x => string.Compare(x.ItemName.Best, variableName, ignoreCase: true) == 0);
                     if (matchingVariables.Count() == 0)
                     {
-                        Console.WriteLine("  [grid] No variable named " + variableName);
+                        Trace.WriteLine("        [grid] no variable named " + variableName);
                         continue;
                     }
 

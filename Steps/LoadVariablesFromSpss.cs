@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace CloserDataPipeline.Steps
 {
@@ -18,7 +19,7 @@ namespace CloserDataPipeline.Steps
 
         public string Name
         {
-            get { return "Load Variables from SPSS"; }
+            get { return "Load Variables from SPSS - " + Path.GetFileName(fileName); }
         }
 
         public LoadVariablesFromSpss(string fileName)

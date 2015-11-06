@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace CloserDataPipeline.Steps
 {
@@ -22,7 +23,7 @@ namespace CloserDataPipeline.Steps
 
         public string Name
         {
-            get { return "Link Concepts to Questions Constructs"; }
+            get { return "Link Concepts to Q. Constructs - " + Path.GetFileName(fileName); }
         }
 
         public LinkConceptsToQuestions(string fileName, string qcsName)
@@ -37,7 +38,7 @@ namespace CloserDataPipeline.Steps
         {
             if (!System.IO.File.Exists(fileName))
             {
-                Console.WriteLine("...Missing file: " + fileName);
+                Trace.WriteLine("   missing file: " + fileName);
                 return;
             }
 
@@ -61,7 +62,7 @@ namespace CloserDataPipeline.Steps
                 string[] parts = line.Split(new char[] { '\t' });
                 if (parts.Length != 2)
                 {
-                    Console.WriteLine("   invalid line: " + line);
+                    Trace.WriteLine("      invalid line: " + line);
                     continue;
                 }
 
@@ -125,12 +126,12 @@ namespace CloserDataPipeline.Steps
                     }
                     qcg.Concept = qcgConcept;
                     qcg.ItemName.Add("en-GB", "Question Construct Group - " + qcgConcept.Label.Best);
-                    //Console.WriteLine("   " + qcg.ItemName.Best);
+                    //Trace.WriteLine("   " + qcg.ItemName.Best);
                     controlConstructScheme.ControlConstructGroups.Add(qcg);
                 }
             }
             WorkingSet.AddRange(controlConstructScheme.ControlConstructGroups);
-            Console.WriteLine("  question construct groups: " + controlConstructScheme.ControlConstructGroups.Count().ToString() + " for " + this.qcsName);
+            Trace.WriteLine("  question construct groups: " + controlConstructScheme.ControlConstructGroups.Count().ToString() + " for " + this.qcsName);
         }
 
         private void BuildQuestionGroupHierarchy()
@@ -157,7 +158,7 @@ namespace CloserDataPipeline.Steps
                 {
                     if (string.Compare(questionsConcepts[qta.ItemName.Best], "0") == 0)
                     {
-                        Console.WriteLine("  question with 0 topic: " + qta.ItemName.Best);
+                        Trace.WriteLine("     question with 0 topic: " + qta.ItemName.Best);
                     }
                     else
                     {
@@ -168,7 +169,7 @@ namespace CloserDataPipeline.Steps
                 }
                 else
                 {
-                    Console.WriteLine("  question not in linking file: " + qta.ItemName.Best);
+                    Trace.WriteLine("     question not in linking file: " + qta.ItemName.Best);
                 }
             }
         }
