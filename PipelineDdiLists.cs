@@ -13,6 +13,7 @@ namespace CloserDataPipeline
     public class PipelineDdiLists
     {
         public List<batch> batchList { get; protected set; }
+        public string basePath { get; protected set; }
 
         public PipelineDdiLists(string importPath)
         {
@@ -41,7 +42,11 @@ namespace CloserDataPipeline
         private void ParseLine(string line)
         {
             string[] parts = line.Split(new char[] { '\t' });
-            if ((parts.Length == 2) && (parts[0] == "batch"))
+            if ((parts.Length == 2) && (parts[0] == "rootdir"))
+            {
+                basePath = parts[1];
+            }           
+            else if ((parts.Length == 2) && (parts[0] == "batch"))
             {
                 string parsedBatchName = parts[1];
                 batch newBatch = new batch(parsedBatchName);

@@ -27,9 +27,6 @@ namespace CloserDataPipeline
             //file of lists of files to be ingested
             string listPath = @"d:\development\claude\repo_ingest\imports\ddifiles.txt";
 
-            //the directory where these files are 
-            string basePath = @"";      //for when the files are in multiple places
-
             //read the batches and lists of files
             var ddiLists = new PipelineDdiLists(listPath);
 
@@ -45,7 +42,7 @@ namespace CloserDataPipeline
                 foreach (string fileName in batch.ddiFileList)
                 {
                     Trace.WriteLine("  " + fileName);
-                    runner.Steps.Add(new LoadDdiFile(Path.Combine(basePath, fileName)));
+                    runner.Steps.Add(new LoadDdiFile(Path.Combine(ddiLists.basePath, fileName)));
                 }
                 Trace.WriteLine(" total ddi files to load: " + batch.ddiFileList.Count());
 
@@ -53,7 +50,7 @@ namespace CloserDataPipeline
                 foreach (string fileName in batch.ddiToplevelFileList)
                 {
                     Trace.WriteLine("  " + fileName);
-                    runner.Steps.Add(new LoadDdiToplevelFile(Path.Combine(basePath, fileName)));
+                    runner.Steps.Add(new LoadDdiToplevelFile(Path.Combine(ddiLists.basePath, fileName)));
                 }
                 Trace.WriteLine(" total toplevel file to load and mesh: " + batch.ddiToplevelFileList.Count());
 
@@ -61,7 +58,7 @@ namespace CloserDataPipeline
                 foreach (ddiMappingFile mf in batch.ddiMappingFileList)
                 {
                     Trace.WriteLine("  " + mf.mappingFileName);
-                    runner.Steps.Add(new MapVariablesToQuestions(Path.Combine(basePath, mf.mappingFileName), mf.ccsName, mf.vsName));
+                    runner.Steps.Add(new MapVariablesToQuestions(Path.Combine(ddiLists.basePath, mf.mappingFileName), mf.ccsName, mf.vsName));
                 }
                 Trace.WriteLine(" total mapping file to load: " + batch.ddiMappingFileList.Count());
 
@@ -69,7 +66,7 @@ namespace CloserDataPipeline
                 foreach (ddiLinkingFile lf in batch.ddiLinkingFileList)
                 {
                     Trace.WriteLine("  " + lf.linkingFileName);
-                    runner.Steps.Add(new LinkConceptsToVariables(Path.Combine(basePath, lf.linkingFileName), lf.vsName));
+                    runner.Steps.Add(new LinkConceptsToVariables(Path.Combine(ddiLists.basePath, lf.linkingFileName), lf.vsName));
                 }
                 Trace.WriteLine(" total linking file to load: " + batch.ddiLinkingFileList.Count());
 
@@ -77,7 +74,7 @@ namespace CloserDataPipeline
                 foreach (ddiQuestionLinkingFile qclf in batch.ddiQuestionLinkingFileList)
                 {
                     Trace.WriteLine("  " + qclf.questionLinkingFileName);
-                    runner.Steps.Add(new LinkConceptsToQuestions(Path.Combine(basePath, qclf.questionLinkingFileName), qclf.qcsName));
+                    runner.Steps.Add(new LinkConceptsToQuestions(Path.Combine(ddiLists.basePath, qclf.questionLinkingFileName), qclf.qcsName));
                 }
                 Trace.WriteLine(" total question linking file to load: " + batch.ddiQuestionLinkingFileList.Count());
 
@@ -85,7 +82,7 @@ namespace CloserDataPipeline
                 foreach (ddiDerivationFile df in batch.ddiDerivationFileList)
                 {
                     Trace.WriteLine("  " + df.derivationFileName);
-                    runner.Steps.Add(new DeriveVariables(Path.Combine(basePath, df.derivationFileName), df.vsName));
+                    runner.Steps.Add(new DeriveVariables(Path.Combine(ddiLists.basePath, df.derivationFileName), df.vsName));
                 }
                 Trace.WriteLine(" total variable derivation file to load: " + batch.ddiDerivationFileList.Count());
 
