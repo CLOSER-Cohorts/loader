@@ -17,7 +17,7 @@ namespace CloserDataPipeline
         {
             //Trace.Listeners.Clear();      //don't remove IDE output window
             Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Console.Out));
-            Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(@"d:\development\claude\repo_ingest\imports\loader.log", "myListener"));
+            Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(@"d:\CLOSER\development\claude\repo_ingest\imports\loader.log", "myListener"));
             Trace.WriteLine("LOADER START: " + DateTime.Now.ToString("s"));
             Trace.WriteLine("Ignore the log4net messages");    //has disappeared after adding System.Diagnostics to PipelineDdiLists.cs
 
@@ -25,7 +25,7 @@ namespace CloserDataPipeline
             VersionableBase.DefaultAgencyId = "uk.cls";
 
             //file of lists of files to be ingested
-            string listPath = @"d:\development\claude\repo_ingest\imports\ddifiles.txt";
+            string listPath = @"d:\closer\development\claude\repo_ingest\imports\ddifiles.txt";
 
             //read the batches and lists of files
             var ddiLists = new PipelineDdiLists(listPath);
