@@ -141,7 +141,8 @@ namespace CloserDataPipeline.Steps
             //include level-2 groups into parent level-1 groups
             var variableScheme = WorkingSet.OfType<VariableScheme>().Where(x => string.Compare(x.ItemName.Best, this.vsName, ignoreCase: true) == 0).First();
 
-            var level2VariableGroups = variableScheme.VariableGroups.Where(x => string.Compare(x.Concept.SubclassOf.First().ItemName.Best, "1") != 0);
+            //var level2VariableGroups = variableScheme.VariableGroups.Where(x => string.Compare(x.Concept.SubclassOf.First().ItemName.Best, "1") != 0);
+            var level2VariableGroups = variableScheme.VariableGroups.Where(x => x.Concept.SubclassOf.Count() > 0);
             foreach (var vg2 in level2VariableGroups)
             {
                 var parentConcept = vg2.Concept.SubclassOf.First();

@@ -139,7 +139,8 @@ namespace CloserDataPipeline.Steps
             //include level-2 groups into parent level-1 groups
             var controlConstructScheme = WorkingSet.OfType<ControlConstructScheme>().Where(x => string.Compare(x.ItemName.Best, this.qcsName, ignoreCase: true) == 0).First();
 
-            var level2QuestionGroups = controlConstructScheme.ControlConstructGroups.Where(x => string.Compare(x.Concept.SubclassOf.First().ItemName.Best, "1") != 0);
+            //var level2QuestionGroups = controlConstructScheme.ControlConstructGroups.Where(x => string.Compare(x.Concept.SubclassOf.First().ItemName.Best, "1") != 0);
+            var level2QuestionGroups = controlConstructScheme.ControlConstructGroups.Where(x => x.Concept.SubclassOf.Count() > 0);
             foreach (var qcg2 in level2QuestionGroups)
             {
                 var parentConcept = qcg2.Concept.SubclassOf.First();
