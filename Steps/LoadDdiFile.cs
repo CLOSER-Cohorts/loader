@@ -86,7 +86,7 @@ namespace CloserDataPipeline.Steps
                         p2.ParameterType = InstrumentParameterType.Out;
                         p2.Name.Add("en-GB", "p_" + qc.ItemName.Best);
                         qc.OutParameters.Add(p2);
-                        //var b = new Binding();
+                        var b = new Binding();
                         //b.SourceParameter = p;
                         //b.TargetParameter = p2;
                         //qc.Bindings.Add(b);
