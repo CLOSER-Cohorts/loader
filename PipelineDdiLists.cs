@@ -78,8 +78,9 @@ namespace CloserDataPipeline
                     {
                         string mappingFile = parts[2].Trim();
                         string ccScheme = parts[3].Trim();
+                        List<string> ccSchemeList = ReadCcScheme(ccScheme);
                         string vScheme = parts[4].Trim();
-                        ddiMappingFile mf = new ddiMappingFile(mappingFile, ccScheme, vScheme);
+                        ddiMappingFile mf = new ddiMappingFile(mappingFile, ccScheme, ccSchemeList, vScheme);
                         relevantBatch.ddiMappingFileList.Add(mf);
                     }
                     else if ((parts.Length == 4) && (parts[1] == "LINKING"))
@@ -114,6 +115,23 @@ namespace CloserDataPipeline
                 }
             }
         }
+
+        private List<string> ReadCcScheme(string ccScheme)
+        {
+            //check whether we have multiple instruments as sources
+            if (ccScheme.StartsWith("[") && ccScheme.EndsWith("]"))
+            {
+                //trim the square brackets, split on the comma, extract the trimmed strings, convert to list
+                //string[] parts = ccScheme.Trim(new char[] { '[', ']' }).Split(new char[] { ',' });
+                //return parts.ToList<string>();
+                return ccScheme.Trim(new char[] { '[', ']' }).Split(new char[] { ',' }).Select(p => p.Trim()).ToList<string>();
+                //List<string> parts = line.Split(';').Select(p => p.Trim()).ToList();
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 
     public class batch
@@ -142,12 +160,14 @@ namespace CloserDataPipeline
     {
         public String mappingFileName { get; protected set; }
         public String ccsName { get; protected set; }
+        public List<string> ccsNameList { get; protected set; }
         public String vsName { get; protected set; }
 
-        public ddiMappingFile(string mf, string ccs, string vs)
+        public ddiMappingFile(string mf, string ccs, List<string> ccsl, string vs)
         {
             mappingFileName = mf;
             ccsName = ccs;
+            ccsNameList = ccsl;
             vsName = vs;
         }
     }

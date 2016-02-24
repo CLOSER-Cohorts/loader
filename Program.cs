@@ -58,7 +58,7 @@ namespace CloserDataPipeline
                 foreach (ddiMappingFile mf in batch.ddiMappingFileList)
                 {
                     Trace.WriteLine("  " + mf.mappingFileName);
-                    runner.Steps.Add(new MapVariablesToQuestions(Path.Combine(ddiLists.basePath, mf.mappingFileName), mf.ccsName, mf.vsName));
+                    runner.Steps.Add(new MapVariablesToQuestions(Path.Combine(ddiLists.basePath, mf.mappingFileName), mf.ccsName, mf.ccsNameList, mf.vsName));
                 }
                 Trace.WriteLine(" total mapping file to load: " + batch.ddiMappingFileList.Count());
 

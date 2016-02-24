@@ -14,6 +14,7 @@ namespace CloserDataPipeline.Steps
     {
         string fileName;
         string ccsName;
+        List<string> ccsNameList;
         string vsName;
 
         public List<IVersionable> WorkingSet { get; set; }
@@ -23,10 +24,11 @@ namespace CloserDataPipeline.Steps
             get { return "Map Variables to Questions - " + Path.GetFileName(fileName); }
         }
 
-        public MapVariablesToQuestions(string fileName, string ccsName, string vsName)
+        public MapVariablesToQuestions(string fileName, string ccsName, List<string> ccsNameList, string vsName)
         {
             this.fileName = fileName;
             this.ccsName = ccsName;
+            this.ccsNameList = ccsNameList;
             this.vsName = vsName;
         }
 
@@ -34,10 +36,10 @@ namespace CloserDataPipeline.Steps
         {
             // The file format is:
             //   [QuestionName] [Tab] [VariableName]
-            //
+            // or in the case of multiple source instruments:
+            //   [QuestionConstructSchemeName] [tab] [QuestionName] [Tab] [VariableName]
             // If [QuestionName] or [VariableName] is "0", this is treated as no mapping.
             //
-            // There is no first row header.
 
             if (!System.IO.File.Exists(fileName))
             {
@@ -50,19 +52,44 @@ namespace CloserDataPipeline.Steps
             foreach (string line in lines)
             {
                 // Break the line apart by the tab character.
+                // If there are two parts:
+                // The question construct scheme is the one of the config file.
                 // The left side is the question name. 
                 // The right side is the variable name.
+                // If there are three parts, check that the qc scheme is in the configuration, shift the parts
+                string questionConstructScheme;
+                string questionName;
+                string variableName;
+
+
                 string[] parts = line.Split(new char[] { '\t' });
-                if (parts.Length != 2)
+
+                if (parts.Length == 2)
+                {
+                    questionConstructScheme = this.ccsName;
+                    string questionColumn = parts[0].Trim();
+                    string[] questionNameParts = questionColumn.Split(new char[] { '$' });     //remove grid cell info
+                    questionName = questionNameParts[0];
+                    variableName = parts[1].Trim();
+                }
+                else if (parts.Length == 3)
+                {
+                    questionConstructScheme = parts[0].Trim();
+                    if (this.ccsNameList.Contains(questionConstructScheme) == false)
+                    {
+                        Trace.WriteLine("      invalid question scheme: " + line);
+                        continue;
+                    }
+                    string questionColumn = parts[1].Trim();
+                    string[] questionNameParts = questionColumn.Split(new char[] { '$' });     //remove grid cell info
+                    questionName = questionNameParts[0];
+                    variableName = parts[2].Trim();
+                }
+                else
                 {
                     Trace.WriteLine("      invalid line: " + line);
                     continue;
                 }
-
-                string questionColumn = parts[0].Trim();
-                string[] questionNameParts = questionColumn.Split(new char[] { '$' });     //remove grid cell info
-                string questionName = questionNameParts[0];
-                string variableName = parts[1].Trim();
 
                 // Skip lines with the question name set to "0".
                 if (questionName == "0")
@@ -81,13 +108,10 @@ namespace CloserDataPipeline.Steps
                 // Look this up in the right control construct scheme and then look up the question or question grid from that.
                 // Look up the question in the working set.
                 var matchingQuestionConstructs = WorkingSet.OfType<ControlConstructScheme>().
-                        Where(x => string.Compare(x.ItemName.Best, this.ccsName, ignoreCase: true) == 0).First().
+                        Where(x => string.Compare(x.ItemName.Best, questionConstructScheme, ignoreCase: true) == 0).First().
                         ControlConstructs.OfType<QuestionActivity>().
                         Where(x => string.Compare(x.ItemName.Best, questionName, ignoreCase: true) == 0);
                         
-                //var matchingQuestionConstructs = WorkingSet.OfType<QuestionActivity>()
-                   // .Where(x => string.Compare(x.ItemName.Best, questionName, ignoreCase:true) == 0);
-
                 if (matchingQuestionConstructs.Count() == 0)
                 {
                     Trace.WriteLine("      no question named " + questionName);
