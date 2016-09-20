@@ -100,7 +100,10 @@ namespace CloserDataPipeline.Steps
                     //    Trace.WriteLine("   more than one logical product found for " + dcName);
                     if (lpc > 0)
                         foreach (var lp in matchingLogicalProducts)
+                        {
                             su.AddChild(lp);
+                            Trace.WriteLine("\t=> " + lp.ItemName.Best + " (logical product) added to " + su.ItemName.Best + " (study unit)");
+                        }
                     else
                         Trace.WriteLine("   no logical product found for " + dcName);
 
@@ -112,7 +115,10 @@ namespace CloserDataPipeline.Steps
                     //    Trace.WriteLine("   more than one physical data product found for " + dcName);
                     if (pdpc > 0)
                         foreach (var pp in matchingPhysicalProducts)
+                        {
                             su.AddChild(pp);
+                            Trace.WriteLine("\t=> " + pp.ItemName.Best + " (physical product) added to " + su.ItemName.Best + " (study unit)");
+                        }
                     else
                         Trace.WriteLine("   no physical data product found for " + dcName);
 
@@ -124,7 +130,10 @@ namespace CloserDataPipeline.Steps
                     //    Trace.WriteLine("   more than one physical instance found for " + dcName);
                     if (pic > 0)
                         foreach (var pi in matchingPhysicalInstances)
+                        {
                             su.AddChild(pi);
+                            Trace.WriteLine("\t=> " + pi.ItemName.Best + " (physical instance) added to " + su.ItemName.Best + " (study unit)");
+                        }
                     else
                         Trace.WriteLine("   no physical instance found for " + dcName);
 
@@ -136,7 +145,10 @@ namespace CloserDataPipeline.Steps
                     //    Trace.WriteLine("   more than one resource package found for " + dcName);
                     if (rpc > 0)
                         foreach (var rp in matchingResourcePackages)
+                        {
                             su.AddChild(rp);
+                            Trace.WriteLine("\t=> " + rp.ItemName.Best + " (resource package) added to " + su.ItemName.Best + " (study unit)");
+                        }
                     else
                         Trace.WriteLine("   no resource package found for " + dcName);
                 }

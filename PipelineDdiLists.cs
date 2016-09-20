@@ -62,6 +62,10 @@ namespace CloserDataPipeline
                     {
                         relevantBatch.ddiFileList.Add(parts[2].Trim());
                     }
+                    else if ((parts.Length == 3) && (parts[1] == "EQU"))
+                    {
+                        relevantBatch.ddiFileList.Add(parts[2].Trim());
+                    }
                     else if ((parts.Length == 3) && (parts[1] == "CADDIES"))
                     {
                         relevantBatch.ddiFileList.Add(parts[2].Trim());
@@ -96,6 +100,19 @@ namespace CloserDataPipeline
                         string qcScheme = parts[3].Trim();
                         ddiQuestionLinkingFile lf = new ddiQuestionLinkingFile(questionLinkingFile, qcScheme);
                         relevantBatch.ddiQuestionLinkingFileList.Add(lf);
+                    }
+                    else if ((parts.Length == 4) && (parts[1] == "IMAGE"))
+                    {
+                        string imageDir = parts[2].Trim();
+                        string qcScheme = parts[3].Trim();
+                        ddiImageDir id = new ddiImageDir(imageDir, qcScheme);
+                        relevantBatch.ddiImageDirList.Add(id);
+                    }
+                    else if ((parts.Length == 4) && (parts[1] == "VEQUIV"))
+                    {
+                        string equivilancyFile = parts[2].Trim();
+                        ddiEquivilancyFile lf = new ddiEquivilancyFile(equivilancyFile);
+                        relevantBatch.ddiEquivilancyFileList.Add(lf);
                     }
                     else if ((parts.Length == 4) && (parts[1] == "DERIVATION"))
                     {
@@ -140,8 +157,10 @@ namespace CloserDataPipeline
         public List<string> ddiFileList { get; protected set; }
         public List<ddiMappingFile> ddiMappingFileList { get; protected set; }
         public List<ddiLinkingFile> ddiLinkingFileList { get; protected set; }
+        public List<ddiEquivilancyFile> ddiEquivilancyFileList { get; protected set; }
         public List<ddiQuestionLinkingFile> ddiQuestionLinkingFileList { get; protected set; }
         public List<ddiDerivationFile> ddiDerivationFileList { get; protected set; }
+        public List<ddiImageDir> ddiImageDirList { get; protected set; }
         public List<string> ddiToplevelFileList { get; protected set; }
 
         public batch(string bn)
@@ -150,8 +169,10 @@ namespace CloserDataPipeline
             ddiFileList = new List<string>();
             ddiMappingFileList = new List<ddiMappingFile>();
             ddiLinkingFileList = new List<ddiLinkingFile>();
+            ddiEquivilancyFileList = new List<ddiEquivilancyFile>();
             ddiQuestionLinkingFileList = new List<ddiQuestionLinkingFile>();
             ddiDerivationFileList = new List<ddiDerivationFile>();
+            ddiImageDirList = new List<ddiImageDir>();
             ddiToplevelFileList = new List<string>();
         }
     }
@@ -171,6 +192,18 @@ namespace CloserDataPipeline
             vsName = vs;
         }
     }
+
+    public class ddiImageDir
+    {
+        public String imageDirName { get; protected set; }
+        public String ccsName { get; protected set; }
+
+        public ddiImageDir(string id, string ccs)
+        {
+            imageDirName = id;
+            ccsName = ccs;
+        }
+    }
    
     public class ddiLinkingFile
     {
@@ -181,6 +214,16 @@ namespace CloserDataPipeline
         {
             linkingFileName = lf;
             vsName = vs;
+        }
+    }
+
+    public class ddiEquivilancyFile
+    {
+        public String equivilancyFileName { get; protected set; }
+
+        public ddiEquivilancyFile(string ef)
+        {
+            equivilancyFileName = ef;
         }
     }
 

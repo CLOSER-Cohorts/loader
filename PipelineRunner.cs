@@ -43,8 +43,8 @@ namespace CloserDataPipeline
             Trace.WriteLine("Registering all items in the working set with the repository...");            
             var client = Utility.GetClient();
             //comment out the following two lines for the dry run
-            //client.RegisterItems(workingSet, new CommitOptions());
-            //Trace.WriteLine(" done registering items");
+            client.RegisterItems(workingSet, new CommitOptions());
+            Trace.WriteLine(" done registering items");
         }
     }
 }

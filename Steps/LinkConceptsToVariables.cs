@@ -72,7 +72,6 @@ namespace CloserDataPipeline.Steps
 
                 this.variablesConcepts.Add(variableName, conceptIdx);
             }
-
         }
 
         private void CreateVariableGroups()

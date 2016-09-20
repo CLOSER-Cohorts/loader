@@ -17,7 +17,7 @@ namespace CloserDataPipeline
         {
             //Trace.Listeners.Clear();      //don't remove IDE output window
             Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Console.Out));
-            Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(@"d:\CLOSER\development\claude\repo_ingest\imports\loader.log", "myListener"));
+            Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(@"d:\CLOSER\development\claude\repo_ingest\imports\loader.images.log", "myListener"));
             Trace.WriteLine("LOADER START: " + DateTime.Now.ToString("s"));
             Trace.WriteLine("Ignore the log4net messages");    //has disappeared after adding System.Diagnostics to PipelineDdiLists.cs
 
@@ -25,7 +25,7 @@ namespace CloserDataPipeline
             VersionableBase.DefaultAgencyId = "uk.cls";
 
             //file of lists of files to be ingested
-            string listPath = @"d:\closer\development\claude\repo_ingest\imports\ddifiles.txt";
+            string listPath = @"d:\closer\development\claude\repo_ingest\imports\ddifiles.will.txt";
 
             //read the batches and lists of files
             var ddiLists = new PipelineDdiLists(listPath);
@@ -85,6 +85,22 @@ namespace CloserDataPipeline
                     runner.Steps.Add(new DeriveVariables(Path.Combine(ddiLists.basePath, df.derivationFileName), df.vsName));
                 }
                 Trace.WriteLine(" total variable derivation file to load: " + batch.ddiDerivationFileList.Count());
+
+                //put adding 
+                foreach (ddiImageDir id in batch.ddiImageDirList)
+                {
+                    Trace.WriteLine("  " + id.imageDirName);
+                    runner.Steps.Add(new AttachExternalAids(Path.Combine(ddiLists.basePath, id.imageDirName), id.ccsName));
+                }
+                Trace.WriteLine(" total image folder to process: " + batch.ddiDerivationFileList.Count());
+
+                //put adding 
+                foreach (ddiEquivilancyFile ef in batch.ddiEquivilancyFileList)
+                {
+                    Trace.WriteLine("  " + ef.equivilancyFileName);
+                    runner.Steps.Add(new LinkEquivalentsToVariables(Path.Combine(ddiLists.basePath, ef.equivilancyFileName)));
+                }
+                Trace.WriteLine(" total variable equivilancy file to load: " + batch.ddiEquivilancyFileList.Count());
 
 
                 //digest the batch and commit to the repository
